@@ -1,0 +1,24 @@
+{
+  "name": "arm5server",
+  "version": "1.0.0",
+  "description": "ArM5 Tools server implementation using express",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "nodemon src/main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "arm5",
+    "express",
+    "rpg",
+    "server"
+  ],
+  "author": "Antti Kautiainen",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

@@ -1,0 +1,6 @@
+*.env
+.env/*
+!*.example.env
+node_modules
+vs_code/*
+src/arm5tools

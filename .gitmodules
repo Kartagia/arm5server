@@ -1,0 +1,3 @@
+[submodule "src/arm5tools"]
+	path = src/arm5tools
+	url = https://github.com/Kartagia/arm5tools
