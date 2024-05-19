@@ -7,34 +7,7 @@ import {
   StrictEquality,
 } from "../src/arm5tools/utils_covenant.mjs";
 
-/**
- * Convert valeu to string.
- * @param {any} a The outputted value.
- * @returns {string} The string containing information of the value.
- * - Functions are reprsented by the string "function <functonname>"
- * - Symbols are represented by th estirng "Symbol:" followed by the global key
- * of the symbol, if it has any.
- * - String is reprsented by a quoted string.
- * - Array is represented by the array member stringifications separated with "," and
- * printed between "[" and "]".
- * - An object is represented by the JSONification of the object.
- * @todo Object outputting.
- * @todo Add escape of the quotes within the string.
- */
-function toString(a) {
-  switch (typeof a) {
-    case "string":
-      return `"${a}"`;
-    case "function":
-      return `Function ${a.name}`;
-    case "symbol":
-      return `Symbol:${Symbol.keyFor(a)}`;
-    case "object":
-      return Array.isArray(a) ? `[${a.map(toString).join(",")}]` : `{}`;
-    default:
-      return String(a);
-  }
-}
+import {toString} from "../src/testkit/testcase.mjs";
 
 describe("Equality", function () {
   const defaultCases = [
