@@ -5,6 +5,7 @@ import {
   IteratorHelper,
   range,
 } from "../src/arm5tools/utils.mjs";
+import { toString } from "../src/testkit/testcase.mjs";
 
 /**
  * The test library for testing utilities.
@@ -21,10 +22,9 @@ const fibonacci = (limit = Number.MAX_SAFE_INTEGER) => ({
   second: 1,
   limit,
   next() {
-    if (this.second <= this.limit - this.first) {
-      const result = { done: false, value: this.first + this.second };
-      this.first = this.second;
-      this.second = result.value;
+    if (this.second <= this.limit) {
+      const result = { done: false, value: this.second };
+      [this.first, this.second] = [this.second, this.first + this.second];
       return result;
     } else {
       return { done: true };
@@ -157,6 +157,9 @@ function testTestCase(testCase, index = undefined) {
           throw err;
         }).to.throw(testCase.exception);
       } else {
+        if ("cause" in err) {
+          console.error(`UNexpected exception caused by ${err.cause}`);
+        }
         throw new AssertionError(`Unexpected exception ${err} thrown`);
       }
     }
@@ -292,7 +295,7 @@ describe("IteratorHelper", function () {
         [fibonacci()],
         (result) => {
           expect(result).instanceof(IteratorHelper);
-          const expectedIter = [1, 2, 3, 5, 8, 13, 21, 34, 55][
+          const expectedIter = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55][
             Symbol.iterator
           ]();
           let expected = expectedIter.next();
@@ -401,14 +404,13 @@ describe("IteratorHelper", function () {
   describe("Method every", function () {
     [
       ...getBasicTestCases().reduce((result, testCase, index) => {
-        const expected = [...(testCase.expected)];
+        const expected = [...testCase.expected];
         result.push({
           ...testCase,
           name: testCase.name.concat(" success"),
           tester: (result, param = undefined) => {
             const value = result.every(
-              (tested) =>
-                testCase.expected && expected.includes(tested)
+              (tested) => testCase.expected && expected.includes(tested)
             );
             expect(value).not.null;
             return value;
@@ -504,7 +506,9 @@ describe("IteratorHelper", function () {
             tester(result, index) {
               const value = result.filter((tested) => tested === expected);
               expect(value).not.null;
-              const expectedIter = testCase.expected.filter((tested) => tested === expected);
+              const expectedIter = testCase.expected.filter(
+                (tested) => tested === expected
+              );
               let expectedCursor = expectedIter.next();
               while (!expectedCursor.done) {
                 const cursor = value.next();
@@ -512,7 +516,7 @@ describe("IteratorHelper", function () {
                 expect(cursor).property("value", expected);
                 expectedCursor = expectedIter.next();
               }
-              expect(cursor.next()).property("done", true); 
+              expect(cursor.next()).property("done", true);
             },
             expected: undefined,
           });
@@ -536,9 +540,58 @@ describe("IteratorHelper", function () {
     });
   });
 
-  describe.skip("Method map", function () {
+  describe("method map basic test", function () {
+    const mapper = (value, index) => `${index}:${toString(value)}`;
+    it("Empty iterator", function () {
+      const tested = new IteratorHelper();
+      expect(tested).instanceof(IteratorHelper);
+      let result = undefined;
+      expect(() => {
+        result = tested.map(mapper);
+      }).not.throw();
+      expect(result).instanceof(IteratorHelper);
+      expect(result).property("next");
+      let cursor = result.next();
+      expect(cursor, "Next returned undefined").not.undefined;
+      expect(cursor, "The iteration is not done").property("done", true);
+    });
+    it("Fibonacci(5)", function () {
+      const tested = new IteratorHelper(fibonacci(5));
+      expect(tested).instanceof(IteratorHelper);
+      let cursor = tested.next();
+      let f1 = 0,
+        f2 = 1;
+      while (!cursor.done) {
+        expect(cursor.value).equal(f2);
+        [f1, f2] = [f2, f1 + f2];
+        cursor = tested.next();
+      }
+      expect(f1).equal(5);
+    });
+  });
+
+  describe("Method map", function () {
     [
       ...getBasicTestCases().reduce((result, testCase, index) => {
+        const func = (/** @type {number} */ entry, entryIndex) =>
+          `Entry #${entryIndex}:${toString(entry)}`;
+        const expectedIter = testCase.expected;
+        result.push({
+          ...testCase,
+          name: testCase.name.concat(
+            ` mapping values to strings`
+          ),
+          tester(/** @type {IteratorHelper<number>} */ result, index) {
+            const value = result.map(func);
+            expect(value).not.null;
+            let iterIndex = 0;
+            expect(expectedIter).instanceof(Object);
+            expect(expectedIter).property("next");
+            let expected = expectedIter.next();
+            let cursor = value.next();
+          },
+          expected: undefined
+        });
         return result;
       }, []),
     ].forEach((testCase, index) => {
