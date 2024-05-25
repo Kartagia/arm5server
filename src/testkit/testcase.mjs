@@ -133,6 +133,26 @@ export function testTestCase(testCase, index = undefined) {
 }
 
 /**
+ * Test a construction test case.
+ * @template {CLASS extends ObjectConstructor} CLASS The constructed class.
+ * @param {TestCase<ObjectConstructor>} testCase The test case of the 
+ * @param {number} [index] The test case index. 
+ */
+export function testConstructionTestCase(testCase, index=undefined) {
+  if (testCase.exception) {
+    expect(() => {
+      const result = new testCase.tested(...testCase.params);
+    }).to.throw(exception);
+  } else {
+    expect( () => {
+      const result = new testCase.tested(...testCase.params);
+    }).not.throw();
+    const result = new testCase.tested(...testCase.params);
+    expect(testCase.test(result)).equal(testCase.result);
+  }
+}
+
+/**
  * Convert value to string.
  * @param {any} a The outputted value.
  * @returns {string} The string containing information of the value.
@@ -148,6 +168,8 @@ export function testTestCase(testCase, index = undefined) {
  */
 export function toString(a) {
   switch (typeof a) {
+    case "undefined":
+      return "undefined";
     case "string":
       return `"${a}"`;
     case "function":
@@ -156,7 +178,6 @@ export function toString(a) {
       return `Symbol:${Symbol.keyFor(a)}`;
     case "object":
       if (a === null) return "null";
-      if (a === undefined) return "undefined";
       return Array.isArray(a)
         ? `[${paramsToString(a)}]`
         : `{${
@@ -168,9 +189,9 @@ export function toString(a) {
               .map((property, index) => {
                 const value = a[property];
                 if (value instanceof Function) {
-                  return `method ${toString(a)}`;
+                  return `method ${toString(property)}`;
                 } else {
-                  return `property ${toString(a)}=${toString(value)}`;
+                  return `property ${toString(property)}=${toString(value)}`;
                 }
               })
               .join(", ")
